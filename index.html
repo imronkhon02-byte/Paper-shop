@@ -71,7 +71,7 @@ const $=id=>document.getElementById(id);let name=null,isAdmin=false,cart=[],orde
 const norm=s=>s.trim().replace(/\s+/g,' ').toLowerCase(),msg=(el,t,c)=>{$(el).textContent=t;$(el).className='msg '+(c||'')};
 async function api(url,data){let r=await fetch(url,{method:data?'POST':'GET',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined});let j=await r.json();if(!r.ok)throw Error(j.error||'Ошибка');return j}
 async function refresh(){let d=await api('/api/data');extra=d.extra||[];notes=d.notes||[];seen=d.seen||0;render();renderNotes()}
-async function login(){let raw=$('nm').value.trim().replace(/\s+/g,' ');if(raw.split(' ').length<2){msg('rm','Введи имя и фамилию через пробел','err');return}try{await api('/api/login',{name:raw});name=raw;isAdmin=false;enter()}catch(e){msg('rm',e.message,'err')}}
+async function login(){let raw=$('nm').value.trim().replace(/\s+/g,' ');if(raw.split(' ').length<2){msg('rm','Умидхонов Имрон','err');return}try{await api('/api/login',{name:raw});name=raw;isAdmin=false;enter()}catch(e){msg('rm',e.message,'err')}}
 async function adminLogin(){
   password=$('ap').value;
   try{
