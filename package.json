@@ -1,0 +1,1 @@
+{"name":"paper-shop","version":"1.0.0","description":"Paper laptop shop","main":"server.js","scripts":{"start":"node server.js"}}

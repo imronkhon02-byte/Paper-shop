@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Бумажки — магазин бумажных ноутбуков</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📄%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#f6f1e7;--card:#fffdf8;--ink:#2b2a27;--mut:#7a7467;--line:#e2dac8;--acc:#c0562b;--accink:#fff;--ok:#2f7d4f;--err:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#1d1b18;--card:#272420;--ink:#f1ece2;--mut:#a39c8e;--line:#3a352e;--acc:#e0774a;--accink:#1d1b18;--ok:#6fcf97;--err:#f2867f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:760px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+h1{margin:0;font-size:24px}.sub{color:var(--mut);font-size:14px;margin:0 0 14px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit;margin-bottom:8px}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--acc);color:var(--accink);cursor:pointer;font-weight:600}
+button.g{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.msg{min-height:20px;font-size:14px;margin-top:6px}.err{color:var(--err)}.ok{color:var(--ok)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.lap{height:70px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.scr{width:70%;height:46px;border:3px solid var(--ink);border-radius:6px 6px 0 0;background:repeating-linear-gradient(var(--card) 0 7px,var(--line) 7px 8px);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.base{width:90%;height:8px;background:var(--ink);border-radius:0 0 8px 8px}
+.nm{font-weight:700;text-align:center}.pr{color:var(--ok);font-size:13px;text-align:center}
+.row{display:flex;gap:6px}.row button{flex:1;padding:8px 6px;font-size:14px}
+.ci{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.hide{display:none}.bdg{background:var(--acc);color:var(--accink);border-radius:99px;padding:1px 8px;font-size:13px}
+.nt{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}.nt small{color:var(--mut)}.nw{border-left:3px solid var(--acc);padding-left:8px}
+a.l{color:var(--mut);font-size:13px;cursor:pointer;text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="w">
+<header><h1>📄 Бумажки</h1><div id="me" class="hide"><span id="mn"></span> <button class="g" id="out">Выйти</button></div></header>
+<p class="sub">Магазин бумажных ноутбуков. Всё бесплатно, но не больше 2 товаров в день.</p>
+
+
+
+<div id="reg" class="box">
+<b>Регистрация</b>
+<input id="nm" placeholder="Имя и фамилия" maxlength="40" autocomplete="off">
+<button id="go">Войти / зарегистрироваться</button>
+<div id="rm" class="msg"></div>
+<a class="l" id="al">Вход создателя</a>
+<div id="af" class="hide" style="margin-top:8px">
+<input id="ap" type="password" placeholder="Пароль создателя">
+<button class="g" id="ag">Войти как создатель</button></div>
+</div>
+
+<div id="shop" class="hide">
+<div id="adm" class="box hide"><b>👑 Панель создателя</b>
+<input id="ln" placeholder="Название нового ноутбука" maxlength="30" style="margin-top:8px">
+<button id="la">Опубликовать в магазине</button><div id="am" class="msg"></div>
+<b>Покупки</b> <span id="nb" class="bdg hide"></span> <button class="g" id="rd" style="padding:4px 10px;font-size:13px">Прочитано</button>
+<div id="nl"></div></div>
+<div class="box"><b>Корзина</b> <span id="cn" style="color:var(--mut)"></span>
+<div id="cart"></div>
+<button id="buy" style="margin-top:8px">Оформить</button>
+<div id="sm" class="msg"></div></div>
+<div class="grid" id="grid"></div>
+</div>
+</div>
+
+
+<script>
+const ADMIN="Умидхонов Имрон", LIMIT=2, BASE=["F-15","F-35","F-35PRO","F-35PEAL","F-40","F-50","F-60","F67","F-69 “LIMITED”","F-75","F80ULTRA"];
+const $=id=>document.getElementById(id);let name=null,isAdmin=false,cart=[],ordered=[],extra=[],notes=[],password='',seen=0;
+const norm=s=>s.trim().replace(/\s+/g,' ').toLowerCase(),msg=(el,t,c)=>{$(el).textContent=t;$(el).className='msg '+(c||'')};
+async function api(url,data){let r=await fetch(url,{method:data?'POST':'GET',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined});let j=await r.json();if(!r.ok)throw Error(j.error||'Ошибка');return j}
+async function refresh(){let d=await api('/api/data');extra=d.extra||[];notes=d.notes||[];seen=d.seen||0;render();renderNotes()}
+async function login(){let raw=$('nm').value.trim().replace(/\s+/g,' ');if(raw.split(' ').length<2){msg('rm','Введи имя и фамилию через пробел','err');return}try{await api('/api/login',{name:raw});name=raw;isAdmin=false;enter()}catch(e){msg('rm',e.message,'err')}}
+async function adminLogin(){password=$('ap').value;try{await api('/api/admin',{password,action:'check'}).catch(()=>{});name=ADMIN;isAdmin=true;enter()}catch(e){msg('rm',e.message,'err')}}
+async function enter(){ $('reg').classList.add('hide');$('shop').classList.remove('hide');$('me').classList.remove('hide');$('mn').textContent=name;if(isAdmin)$('adm').classList.remove('hide');else $('adm').classList.add('hide');cart=[];ordered=[];await refresh();if(isAdmin)setInterval(refresh,4000)}
+function renderNotes(){let unread=0;$('nl').innerHTML=notes.length?'':'<div style="color:var(--mut)">Пока никто не покупал</div>';notes.slice().sort((a,b)=>b.t-a.t).forEach(n=>{let r=document.createElement('div');r.className='nt'+(n.t>seen?' nw':'');if(n.t>seen)unread++;let b=document.createElement('b');b.textContent=n.buyer;let t=document.createElement('span');t.textContent=' купил: '+n.items.join(', ');let small=document.createElement('small');small.textContent=' · '+new Date(n.t).toLocaleString('ru-RU');r.append(b,t,small);$('nl').appendChild(r)});$('nb').textContent=unread;$('nb').classList.toggle('hide',!unread)}
+async function publishLap(){let v=$('ln').value.trim();if(!v){msg('am','Введи название','err');return}try{await api('/api/admin',{password,action:'publish',name:v});$('ln').value='';msg('am','Опубликовано: '+v,'ok');await refresh()}catch(e){msg('am',e.message,'err')}}
+function left(){return Math.max(0,LIMIT-ordered.length)}
+function render(){if(!name)return;$('grid').innerHTML='';BASE.concat(extra.map(x=>x.name)).forEach(n=>{let el=document.createElement('div');el.className='item';el.innerHTML='<div class="lap"><div class="scr"></div><div class="base"></div></div><div class="nm"></div><div class="pr">Бесплатно</div><div class="row"><button class="g">В корзину</button><button>Купить</button></div>';el.querySelector('.scr').textContent=n.split(' ')[0];el.querySelector('.nm').textContent=n;let [a,b]=el.querySelectorAll('button');a.onclick=()=>add(n);b.onclick=()=>buyNow(n);let ex=extra.find(x=>x.name===n);if(isAdmin&&ex){let d=document.createElement('button');d.className='g';d.textContent='Удалить из магазина';d.onclick=async()=>{await api('/api/admin',{password,action:'delete',id:ex.id});refresh()};el.appendChild(d)}$('grid').appendChild(el)});$('cn').textContent='(сегодня осталось: '+left()+' из '+LIMIT+')';$('cart').innerHTML=cart.length?'':'<div style="color:var(--mut);padding:6px 0">Пока пусто</div>';cart.forEach((n,i)=>{let r=document.createElement('div');r.className='ci';let s=document.createElement('span');s.textContent=n;let x=document.createElement('button');x.className='g';x.textContent='Убрать';x.onclick=()=>{cart.splice(i,1);render()};r.append(s,x);$('cart').appendChild(r)});$('buy').disabled=!cart.length}
+function add(n){if(cart.length>=LIMIT){msg('sm','Лимит: не больше 2 товаров в день','err');return}cart.push(n);msg('sm','Добавлено: '+n,'ok');render()}
+async function checkout(items){if(!items.length)return false;try{await api('/api/buy',{name,items});ordered=ordered.concat(items);msg('sm','Готово! Твои бумажки: '+items.join(', '),'ok');await refresh();return true}catch(e){msg('sm',e.message,'err');return false}}
+async function buyNow(n){if(await checkout([n]))render()}async function buyCart(){if(await checkout(cart.slice())){cart=[];render()}}
+$('go').onclick=login;$('nm').onkeydown=e=>{if(e.key==='Enter')login()};$('al').onclick=()=>$('af').classList.toggle('hide');$('ag').onclick=adminLogin;$('buy').onclick=buyCart;$('la').onclick=publishLap;$('rd').onclick=async()=>{await api('/api/admin',{password,action:'seen'});refresh()};$('out').onclick=()=>location.reload();
+</script>
+</body>
+</html>
