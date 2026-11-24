@@ -1,3 +1,4 @@
+
 const http=require('http'),fs=require('fs'),path=require('path');
 const PORT=process.env.PORT||3000, ADMIN_PASSWORD=process.env.ADMIN_PASSWORD;
 const admins={creator:{name:'Умидхонов Имрон',password:ADMIN_PASSWORD},sasha:{name:'Умаров Саша',password:process.env.SASHA_PASSWORD},bakhtier:{name:'Исабаев Бахтиер',password:process.env.BAKHTIER_PASSWORD},donier:{name:'Заиров Дониер',password:process.env.DONIER_PASSWORD}};
@@ -20,7 +21,12 @@ if(req.url==='/api/buy'&&req.method==='POST'){let items=x.items||[];if(!name||na
 if(req.url==='/api/repair'&&req.method==='POST'){let master=(x.master||'').trim(),desc=(x.description||'').trim(),allowed=Object.values(admins).map(a=>a.name);if(!name||name.split(' ').length<2||!allowed.includes(master)||desc.length<5||desc.length>1000)return send(res,400,{error:'Укажите имя, мастера и описание (5–1000 символов)'});d.repairs.push({id:String(Date.now())+Math.random().toString(36).slice(2,7),buyer:name,master,description:desc,status:'Новое',t:Date.now()});save(d);return send(res,200,{ok:true})}
 if(req.url==='/api/admin'&&req.method==='POST'){let role=roleFor(x.password);if(!role)return send(res,403,{error:'Пароль администратора неверный'});let action=x.action;
 if(action==='check')return send(res,200,{ok:true,role});
-if(action==='repairList'){let own=admins[role].name;return send(res,200,{repairs:d.repairs.filter(a=>role==='creator'||a.master===own)})}
+
+if(action==='orderList'){
+return send(res,200,{orders:d.notes.slice().reverse()})
+}
+
+if(action==='repairList'){let own=admins[role].name;return send(res,200,{repairs:d.repairs.filter(a=>role==='creator'||a.master===own})}
 if(action==='repairStatus'){let item=d.repairs.find(a=>a.id===x.id);if(!item||!(role==='creator'||item.master===admins[role].name))return send(res,403,{error:'Нет доступа'});if(!['Новое','В работе','Завершено'].includes(x.status))return send(res,400,{error:'Неверный статус'});item.status=x.status;save(d);return send(res,200,{ok:true})}
 if(action==='setRating'){if(role!=='creator')return send(res,403,{error:'Оценки изменяет только создатель'});let m=(x.master||'').trim(),rating=String(x.rating||'').trim(),desc=(x.description||'').trim();if(!Object.values(admins).some(a=>a.name===m)||!rating||rating.length>30||desc.length>500)return send(res,400,{error:'Проверьте оценку и описание'});d.ratings[m]={rating,description:desc};save(d);return send(res,200,{ok:true})}
 if(['publish','publishAccessory','publishDisc'].includes(action)){let v=(x.name||'').trim(),details=(x.details||'').trim(),target=action==='publish'?d.extra:action==='publishAccessory'?d.accessories:d.discs;if(!v||v.length>60||details.length>500||target.some(a=>a.name.toLowerCase()===v.toLowerCase()))return send(res,400,{error:'Название пустое, слишком длинное или уже существует'});target.push({id:String(Date.now())+Math.random().toString(36).slice(2,6),name:v,details});save(d);return send(res,200,{ok:true})}
