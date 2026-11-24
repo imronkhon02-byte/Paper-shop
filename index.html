@@ -34,7 +34,24 @@ function openShop(){$("login").classList.add("hide");$("shop").classList.remove(
 async function showTab(s){tab=s;["repair","panel"].forEach(id=>$(id).classList.toggle("hide",id!==s));$("catalog").classList.toggle("hide",!["laptops","parts","discs"].includes(s));if(s==="panel"&&role==="buyer"){status("Панель только для администратора");return}if(["laptops","parts","discs"].includes(s)){try{data=await api("/api/data");renderCatalog(s)}catch(e){status(e.message)}}if(s==="repair"){renderRatings();}}
 function listFor(s){if(s==="laptops")return BASE.concat(data.extra);if(s==="parts")return PARTS.concat(data.accessories);return data.discs}
 function renderCatalog(s){let list=listFor(s),cat=$("catalog");cat.innerHTML="";list.forEach(item=>{let obj=typeof item==="string"?{name:item}:item,card=document.createElement("article");card.innerHTML="<b></b><p class='muted'></p><button>Добавить</button>";card.querySelector("b").textContent=obj.name;card.querySelector("p").textContent=obj.details||"Бесплатно";card.querySelector("button").onclick=()=>{if(cart.length>=5){status("Корзина ограничена 5 товарами за оформление. Оформите корзину.");return}cart.push(obj.name);status("В корзине "+cart.length+" товар(ов). Лимит 5 товаров в день.");};if(role==="creator"&&typeof item!=="string"){let del=document.createElement("button");del.textContent="Удалить";del.onclick=async()=>{try{await api("/api/admin",{password:$("pw").value,action:"delete",id:item.id});data=await api("/api/data");renderCatalog(s)}catch(e){status(e.message)}};card.append(del)}cat.append(card)});let checkoutBtn=document.createElement("button");checkoutBtn.textContent="Оформить корзину ("+cart.length+")";checkoutBtn.onclick=checkout;cat.append(checkoutBtn)}
-async function checkout(){if(!cart.length){status("Корзина пустая");return}if(cart.length>5){status("Максимум 5 товаров");return}try{await api("/api/buy",{name:buyer,items:cart});status("Заказ оформлен!");cart=[]}catch(e){status(e.message)}}
+async function checkout(){
+if(!cart.length){
+status("Корзина пустая");
+return;
+}
+if(cart.length>5){
+status("Максимум 5 товаров");
+return;
+}
+try{
+await api("/api/buy",{name:buyer,items:cart});
+cart=[];
+status("Заказ оформлен успешно! ✓");
+renderCatalog(tab);
+}catch(e){
+status(e.message);
+}
+}
 async function publish(){try{await api("/api/admin",{password:$("pw").value,action:$("kind").value,name:$("itemname").value,details:$("details").value});status("Опубликовано");$("itemname").value="";$("details").value="";await showTab("laptops")}catch(e){status(e.message)}}
 async function sendRepair(){try{await api("/api/repair",{name:buyer,master:$("master").value,description:$("problem").value});status("Обращение отправлено мастеру");$("problem").value=""}catch(e){status(e.message)}}
 
