@@ -26,7 +26,8 @@ if(action==='orderList'){
 return send(res,200,{orders:d.notes.slice().reverse()})
 }
 
-if(action==='repairList'){let own=admins[role].name;return send(res,200,{repairs:d.repairs.filter(a=>role==='creator'||a.master===own})}
+
+if(action==='repairList'){let own=admins[role].name;return send(res,200,{repairs:d.repairs.filter(a=>role==='creator'||a.master===own)})}
 if(action==='repairStatus'){let item=d.repairs.find(a=>a.id===x.id);if(!item||!(role==='creator'||item.master===admins[role].name))return send(res,403,{error:'Нет доступа'});if(!['Новое','В работе','Завершено'].includes(x.status))return send(res,400,{error:'Неверный статус'});item.status=x.status;save(d);return send(res,200,{ok:true})}
 if(action==='setRating'){if(role!=='creator')return send(res,403,{error:'Оценки изменяет только создатель'});let m=(x.master||'').trim(),rating=String(x.rating||'').trim(),desc=(x.description||'').trim();if(!Object.values(admins).some(a=>a.name===m)||!rating||rating.length>30||desc.length>500)return send(res,400,{error:'Проверьте оценку и описание'});d.ratings[m]={rating,description:desc};save(d);return send(res,200,{ok:true})}
 if(['publish','publishAccessory','publishDisc'].includes(action)){let v=(x.name||'').trim(),details=(x.details||'').trim(),target=action==='publish'?d.extra:action==='publishAccessory'?d.accessories:d.discs;if(!v||v.length>60||details.length>500||target.some(a=>a.name.toLowerCase()===v.toLowerCase()))return send(res,400,{error:'Название пустое, слишком длинное или уже существует'});target.push({id:String(Date.now())+Math.random().toString(36).slice(2,6),name:v,details});save(d);return send(res,200,{ok:true})}
