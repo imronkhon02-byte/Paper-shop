@@ -1,10 +1,27 @@
+
 <!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Бумажки</title><style>
 *{box-sizing:border-box}body{font:16px system-ui;margin:0;background:#f5f1e8;color:#333}main{max-width:850px;margin:auto;padding:16px}header{text-align:center}h1{font-size:34px;background:white;border-radius:45% 55% 60% 40%;padding:18px;color:#7653a5;display:inline-block;box-shadow:0 3px 10px #ddd}section,article{background:white;padding:16px;border-radius:16px;margin:12px 0}input,textarea,select{display:block;width:100%;box-sizing:border-box;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #ccc;font:inherit}button{padding:10px;border:0;border-radius:9px;background:#7653a5;color:white;margin:4px;cursor:pointer}.tabs{display:flex;flex-wrap:wrap}article{min-width:180px;max-width:100%;vertical-align:top}.muted{color:#777}.hide{display:none}.catalog{display:flex;flex-wrap:wrap;gap:10px}.catalog article{flex:1 1 190px}.sub{font-size:14px;color:#777}.status{white-space:pre-wrap}
 </style></head><body><main><header><h1>☁️ БУМАЖКИ ☁️</h1><p>Магазин бумажных ноутбуков</p></header>
 <section id="login"><input id="buyer" placeholder="Имя и фамилия" maxlength="40"><button id="loginbtn">Войти</button><details><summary>Вход администратора / мастера</summary><input id="pw" type="password" placeholder="Пароль"><button id="adminbtn">Войти</button></details></section>
 <section id="shop" class="hide"><div class="tabs"><button data-tab="laptops">Ноутбуки</button><button data-tab="parts">Комплектующие</button><button data-tab="discs">Диски</button><button data-tab="repair">Ремонт</button><button data-tab="panel">Панель</button></div><p id="status" class="status"></p><div id="catalog" class="catalog"></div>
 <section id="repair" class="hide"><h3>Ремонт ноутбуков</h3><select id="master"><option>Умаров Саша</option><option>Исабаев Бахтиер</option><option>Заиров Дониер</option><option>Умидхонов Имрон</option></select><textarea id="problem" maxlength="1000" placeholder="Опишите проблему (не менее 5 символов)"></textarea><button id="repairbtn">Отправить мастеру</button><h3>Оценки мастеров</h3><div id="ratings"></div></section>
-<section id="panel" class="hide"><h3>Управление товарами</h3><select id="kind"><option value="publish">Ноутбук</option><option value="publishAccessory">Комплектующая</option><option value="publishDisc">Диск / игра</option></select><input id="itemname" maxlength="60" placeholder="Название"><textarea id="details" maxlength="500" placeholder="Описание (необязательно)"></textarea><button id="publishbtn">Опубликовать</button><h3>Обращения</h3><button id="loadbtn">Обновить</button><div id="inbox"></div><div id="ratingadmin" class="hide"><h3>Оценки мастеров (только создатель)</h3><select id="rated"><option>Умаров Саша</option><option>Исабаев Бахтиер</option><option>Заиров Дониер</option><option>Умидхонов Имрон</option></select><input id="rating" maxlength="30" placeholder="Оценка / рейтинг"><textarea id="ratingdesc" maxlength="500" placeholder="Описание"></textarea><button id="ratebtn">Сохранить</button></div></section></section></main>
+<section id="panel" class="hide">
+<h3>Управление товарами</h3>
+<select id="kind"><option value="publish">Ноутбук</option><option value="publishAccessory">Комплектующая</option><option value="publishDisc">Диск / игра</option></select>
+<input id="itemname" maxlength="60" placeholder="Название">
+<textarea id="details" maxlength="500" placeholder="Описание (необязательно)"></textarea>
+<button id="publishbtn">Опубликовать</button>
+
+<h3>🛒 Покупки</h3>
+<button id="ordersbtn">Обновить покупки</button>
+<div id="ordersInbox"></div>
+
+<h3>Обращения</h3>
+<button id="loadbtn">Обновить</button>
+<div id="inbox"></div>
+
+<div id="ratingadmin" class="hide"><h3>Оценки мастеров (только создатель)</h3><select id="rated"><option>Умаров Саша</option><option>Исабаев Бахтиер</option><option>Заиров Дониер</option><option>Умидхонов Имрон</option></select><input id="rating" maxlength="30" placeholder="Оценка / рейтинг"><textarea id="ratingdesc" maxlength="500" placeholder="Описание"></textarea><button id="ratebtn">Сохранить</button></div>
+</section></section></main>
 <script>
 const BASE=["F-15","F-35","F-35PRO","F-35PEAL","F-40","F-50","F-60","F67","F-69 LIMITED","F-75","F80ULTRA"];
 const PARTS=["Мышка","Коврик","Корпус ноутбука","Куллер","Мат. плата","Жёсткий диск","Система клавиш","Флешка 512 ГБ","Флешка 1 ТБ","Флешка 212 ГБ"];
@@ -16,12 +33,39 @@ async function adminLogin(){try{let d=await api("/api/admin",{password:$("pw").v
 function openShop(){$("login").classList.add("hide");$("shop").classList.remove("hide");$("ratingadmin").classList.toggle("hide",role!=="creator");showTab(tab)}
 async function showTab(s){tab=s;["repair","panel"].forEach(id=>$(id).classList.toggle("hide",id!==s));$("catalog").classList.toggle("hide",!["laptops","parts","discs"].includes(s));if(s==="panel"&&role==="buyer"){status("Панель только для администратора");return}if(["laptops","parts","discs"].includes(s)){try{data=await api("/api/data");renderCatalog(s)}catch(e){status(e.message)}}if(s==="repair"){renderRatings();}}
 function listFor(s){if(s==="laptops")return BASE.concat(data.extra);if(s==="parts")return PARTS.concat(data.accessories);return data.discs}
-function renderCatalog(s){let list=listFor(s),cat=$("catalog");cat.innerHTML="";list.forEach(item=>{let obj=typeof item==="string"?{name:item}:item,card=document.createElement("article");card.innerHTML="<b></b><p class='muted'></p><button>Добавить</button>";card.querySelector("b").textContent=obj.name;card.querySelector("p").textContent=obj.details||"Бесплатно";card.querySelector("button").onclick=()=>{if(cart.length>=5){status("Корзина ограничена 5 товарами за оформление. Оформите корзину.");return}cart.push(obj.name);status("В корзине "+cart.length+" товар(ов). Лимит 5 товаров в день.");};if(role==="creator"&&typeof item!=="string"){let del=document.createElement("button");del.textContent="Удалить";del.onclick=async()=>{try{await api("/api/admin",{password:$("pw").value,action:"delete",id:item.id});data=await api("/api/data");renderCatalog(s)}catch(e){status(e.message)}};card.append(del)}cat.append(card)});let checkout=document.createElement("button");checkout.textContent="Оформить корзину ("+cart.length+")";checkout.onclick=checkout;cat.append(checkout)}
+function renderCatalog(s){let list=listFor(s),cat=$("catalog");cat.innerHTML="";list.forEach(item=>{let obj=typeof item==="string"?{name:item}:item,card=document.createElement("article");card.innerHTML="<b></b><p class='muted'></p><button>Добавить</button>";card.querySelector("b").textContent=obj.name;card.querySelector("p").textContent=obj.details||"Бесплатно";card.querySelector("button").onclick=()=>{if(cart.length>=5){status("Корзина ограничена 5 товарами за оформление. Оформите корзину.");return}cart.push(obj.name);status("В корзине "+cart.length+" товар(ов). Лимит 5 товаров в день.");};if(role==="creator"&&typeof item!=="string"){let del=document.createElement("button");del.textContent="Удалить";del.onclick=async()=>{try{await api("/api/admin",{password:$("pw").value,action:"delete",id:item.id});data=await api("/api/data");renderCatalog(s)}catch(e){status(e.message)}};card.append(del)}cat.append(card)});let checkoutBtn=document.createElement("button");checkoutBtn.textContent="Оформить корзину ("+cart.length+")";checkoutBtn.onclick=checkout;cat.append(checkoutBtn)}
 async function checkout(){if(!cart.length){status("Корзина пустая");return}if(cart.length>5){status("Максимум 5 товаров");return}try{await api("/api/buy",{name:buyer,items:cart});status("Заказ оформлен!");cart=[]}catch(e){status(e.message)}}
 async function publish(){try{await api("/api/admin",{password:$("pw").value,action:$("kind").value,name:$("itemname").value,details:$("details").value});status("Опубликовано");$("itemname").value="";$("details").value="";await showTab("laptops")}catch(e){status(e.message)}}
 async function sendRepair(){try{await api("/api/repair",{name:buyer,master:$("master").value,description:$("problem").value});status("Обращение отправлено мастеру");$("problem").value=""}catch(e){status(e.message)}}
+
+async function loadOrders(){
+try{
+let d=await api("/api/admin",{password:$("pw").value,action:"orderList"});
+let box=$("ordersInbox");
+box.innerHTML="";
+(d.orders||[]).forEach(o=>{
+let el=document.createElement("article");
+let when=new Date(o.t||Date.now()).toLocaleString();
+el.textContent="🛒 "+o.buyer+" · "+(o.items||[]).join(", ")+" · "+when;
+box.append(el);
+});
+if(!d.orders||!d.orders.length){
+box.textContent="Покупок пока нет.";
+}
+}catch(e){
+status(e.message);
+}
+}
+
 async function loadRepairs(){try{let d=await api("/api/admin",{password:$("pw").value,action:"repairList"});$("inbox").innerHTML="";d.repairs.forEach(a=>{let el=document.createElement("article");el.textContent=a.master+" · "+a.buyer+" · "+a.status+" · "+a.description;["В работе","Завершено"].forEach(st=>{let b=document.createElement("button");b.textContent=st;b.onclick=async()=>{try{await api("/api/admin",{password:$("pw").value,action:"repairStatus",id:a.id,status:st});loadRepairs()}catch(e){status(e.message)}};el.append(b)});$("inbox").append(el)})}catch(e){status(e.message)}}
 async function rate(){try{await api("/api/admin",{password:$("pw").value,action:"setRating",master:$("rated").value,rating:$("rating").value,description:$("ratingdesc").value});status("Оценка сохранена");renderRatings()}catch(e){status(e.message)}}
 async function renderRatings(){let d=await api("/api/data");$("ratings").innerHTML="";Object.entries(d.ratings||{}).forEach(([m,r])=>{let el=document.createElement("article");el.textContent=m+": "+r.rating+" — "+r.description;$("ratings").append(el)})}
-$("loginbtn").onclick=login;$("adminbtn").onclick=adminLogin;$("repairbtn").onclick=sendRepair;$("publishbtn").onclick=publish;$("loadbtn").onclick=loadRepairs;$("ratebtn").onclick=rate;document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+$("loginbtn").onclick=login;
+$("adminbtn").onclick=adminLogin;
+$("repairbtn").onclick=sendRepair;
+$("publishbtn").onclick=publish;
+$("loadbtn").onclick=loadRepairs;
+$("ordersbtn").onclick=loadOrders;
+$("ratebtn").onclick=rate;
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 </script></body></html>
